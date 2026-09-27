@@ -10,7 +10,7 @@ auth.post('/signup', async (c) => {
   const email = body.email?.trim().toLowerCase();
   const password = body.password;
   const name = body.name?.trim();
-  const role = body.role?.toLowerCase();
+  const role = (body.role?.toLowerCase() || 'analyst') as string;
 
   if (!email || !password || !name) {
     return c.json({ error: 'Email, password, and name are required' }, 400);
@@ -20,7 +20,7 @@ auth.post('/signup', async (c) => {
     return c.json({ error: 'Password must be at least 8 characters' }, 400);
   }
 
-  if (!['admin', 'analyst', 'researcher'].includes(role || '')) {
+  if (!['admin', 'analyst', 'researcher'].includes(role)) {
     return c.json({ error: 'Role must be "admin", "analyst", or "researcher"' }, 400);
   }
 
@@ -41,7 +41,7 @@ auth.post('/signup', async (c) => {
     .run();
 
   const token = await signJwt({ sub: userId, email, name, role }, c.env.JWT_SECRET);
-  await recordAudit(c.env.DB, { userId, action: 'user_created_self_signup', entity: 'user', entityId: userId });
+  await recordAudit(c.env.DB, userId, { userId, action: 'user_created_self_signup', entity: 'user', entityId: userId });
 
   return c.json({ token, user: { id: userId, email, name, role } }, 201);
 });
@@ -66,7 +66,7 @@ auth.post('/login', async (c) => {
   }
 
   const token = await signJwt({ sub: user.id, email: user.email, name: user.name, role: user.role }, c.env.JWT_SECRET);
-  await recordAudit(c.env.DB, { userId: user.id, action: 'login', entity: 'user', entityId: user.id });
+  await recordAudit(c.env.DB, user.id, { userId: user.id, action: 'login', entity: 'user', entityId: user.id });
 
   return c.json({
     token,
@@ -80,9 +80,7 @@ auth.post('/login', async (c) => {
 });
 
 auth.get('/me', requireAuth(), async (c) => {
-  const userId = c.get('userId') as string;
-  const user = await c.env.DB.prepare('SELECT id, email, name, role FROM users WHERE id = ?').bind(userId).first<Omit<UserRow, 'password_hash' | 'password_salt'>>();
-
+  const user = c.get('user');
   if (!user) {
     return c.json({ error: 'User not found' }, 404);
   }
