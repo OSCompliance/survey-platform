@@ -40,7 +40,7 @@ auth.post('/signup', async (c) => {
     .bind(userId, email, name, hash, salt, role)
     .run();
 
-  const token = await signJwt({ sub: userId, email, name, role }, c.env.JWT_SECRET);
+  const token = await signJwt({ sub: userId, email, name, role: role as string }, c.env.JWT_SECRET);
   await recordAudit(c.env.DB, { userId, action: 'user_created_self_signup', entity: 'user', entityId: userId });
 
   return c.json({ token, user: { id: userId, email, name, role } }, 201);
@@ -79,7 +79,7 @@ auth.post('/login', async (c) => {
   });
 });
 
-auth.get('/me', requireAuth(), async (c) => {
+auth.get('/me', requireAuth, async (c) => {
   const user = c.get('user');
   if (!user) {
     return c.json({ error: 'User not found' }, 404);
