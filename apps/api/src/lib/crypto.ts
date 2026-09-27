@@ -2,7 +2,7 @@
 // Crypto API so this runs unmodified on the Workers runtime, with no native
 // bindings (bcrypt-style libraries) required.
 
-const PBKDF2_ITERATIONS = 210_000;
+const PBKDF2_ITERATIONS = 100_000;
 const HASH_BITS = 256;
 
 function toHex(buffer: ArrayBuffer): string {

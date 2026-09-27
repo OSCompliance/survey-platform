@@ -1,82 +1,186 @@
-import { FormEvent, useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
-import { useAuth } from '../lib/auth';
-import { ApiError } from '../lib/api';
-import { Spinner } from '../components/Spinner';
+import { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 export function Login() {
-  const { user, login } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
+  const { login } = useAuth();
+  const [email, setEmail] = useState('admin@example.org');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  if (user) return <Navigate to="/" replace />;
-
-  async function handleSubmit(e: FormEvent) {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setSubmitting(true);
+    setError('');
+    setLoading(true);
+
     try {
       await login(email, password);
-      navigate('/');
+      navigate('/dashboard');
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Something went wrong. Please try again.');
+      setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
-      setSubmitting(false);
+      setLoading(false);
     }
-  }
+  };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-surface-page px-4">
-      <div className="w-full max-w-sm">
-        <div className="mb-8 flex flex-col items-center">
-          <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-brand-500 text-lg font-semibold text-white">
-            S
+    <div className="min-h-screen flex bg-white">
+      {/* Left side - Brand showcase */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-900 text-white p-12 flex-col justify-between">
+        <div>
+          <div className="text-4xl font-black tracking-tight mb-2">Survey</div>
+          <div className="text-4xl font-black tracking-tight">Platform</div>
+        </div>
+        
+        <div className="space-y-8">
+          <div>
+            <div className="text-sm font-semibold uppercase tracking-widest text-blue-200 mb-3">Features</div>
+            <div className="space-y-4">
+              <div className="flex items-start gap-3">
+                <div className="w-6 h-6 rounded-full bg-blue-300 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-sm font-bold text-blue-900">✓</span>
+                </div>
+                <div>
+                  <div className="font-semibold">Enterprise-Grade Security</div>
+                  <div className="text-sm text-blue-100">PBKDF2-SHA256 hashing, JWT tokens, role-based access</div>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-3">
+                <div className="w-6 h-6 rounded-full bg-blue-300 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-sm font-bold text-blue-900">✓</span>
+                </div>
+                <div>
+                  <div className="font-semibold">Public Survey Collection</div>
+                  <div className="text-sm text-blue-100">No login required for respondents, real-time tracking</div>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-3">
+                <div className="w-6 h-6 rounded-full bg-blue-300 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-sm font-bold text-blue-900">✓</span>
+                </div>
+                <div>
+                  <div className="font-semibold">Real-Time Analytics</div>
+                  <div className="text-sm text-blue-100">Live response tracking, district-wise distribution, scheme uptake</div>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-3">
+                <div className="w-6 h-6 rounded-full bg-blue-300 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-sm font-bold text-blue-900">✓</span>
+                </div>
+                <div>
+                  <div className="font-semibold">Global Infrastructure</div>
+                  <div className="text-sm text-blue-100">Cloudflare's 200+ edge locations, 99.9% uptime SLA</div>
+                </div>
+              </div>
+            </div>
           </div>
-          <h1 className="text-lg font-semibold text-ink-primary">Survey Platform</h1>
-          <p className="mt-1 text-sm text-ink-secondary">Sign in to your research console</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="card space-y-4 p-6">
-          {error && (
-            <div className="rounded-md bg-status-critical/10 px-3 py-2 text-sm text-red-700">{error}</div>
-          )}
-          <div>
-            <label className="label" htmlFor="email">Email</label>
-            <input
-              id="email"
-              type="email"
-              required
-              autoComplete="username"
-              className="input"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.org"
-            />
-          </div>
-          <div>
-            <label className="label" htmlFor="password">Password</label>
-            <input
-              id="password"
-              type="password"
-              required
-              autoComplete="current-password"
-              className="input"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-            />
-          </div>
-          <button type="submit" className="btn-primary w-full" disabled={submitting}>
-            {submitting ? <Spinner className="h-4 w-4 text-white" /> : 'Sign in'}
-          </button>
-        </form>
+        <div className="text-xs text-blue-200">
+          Survey Platform v1.0 • Enterprise Edition
+        </div>
+      </div>
 
-        <p className="mt-6 text-center text-xs text-ink-muted">
-          Local dev seed: admin@example.org / ChangeMe123!
-        </p>
+      {/* Right side - Login form */}
+      <div className="w-full lg:w-1/2 flex flex-col justify-center px-6 sm:px-12 lg:px-16">
+        <div className="w-full max-w-md mx-auto">
+          <div className="mb-8">
+            <h1 className="text-4xl font-black tracking-tight text-gray-900 mb-2">Welcome back</h1>
+            <p className="text-lg text-gray-600">Sign in to your research console</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Email field */}
+            <div>
+              <label htmlFor="email" className="block text-sm font-semibold text-gray-900 mb-2">
+                Email address
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                placeholder="you@example.org"
+                className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
+              />
+            </div>
+
+            {/* Password field */}
+            <div>
+              <label htmlFor="password" className="block text-sm font-semibold text-gray-900 mb-2">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                placeholder="••••••••"
+                className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
+              />
+            </div>
+
+            {/* Error message */}
+            {error && (
+              <div className="p-3 rounded-lg bg-red-50 border border-red-200 flex items-start gap-3">
+                <span className="text-red-600 font-bold text-lg flex-shrink-0">!</span>
+                <p className="text-red-800 text-sm font-medium">{error}</p>
+              </div>
+            )}
+
+            {/* Sign in button */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 px-4 rounded-lg font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                  Signing in...
+                </span>
+              ) : (
+                'Sign in'
+              )}
+            </button>
+          </form>
+
+          {/* Divider */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">New to Survey Platform?</span>
+            </div>
+          </div>
+
+          {/* Sign up link */}
+          <Link
+            to="/signup"
+            className="block w-full py-3 px-4 text-center rounded-lg font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-all"
+          >
+            Create account
+          </Link>
+
+          {/* Demo credentials */}
+          <div className="mt-8 p-4 rounded-lg bg-gray-50 border border-gray-200">
+            <p className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-2">Demo credentials</p>
+            <p className="text-sm text-gray-700">
+              <span className="font-mono">admin@example.org</span>
+            </p>
+            <p className="text-sm text-gray-700">
+              <span className="font-mono">ChangeMe123!</span>
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
