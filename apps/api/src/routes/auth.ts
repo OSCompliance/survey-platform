@@ -60,4 +60,34 @@ auth.post('/login', async (c) => {
     return c.json({ error: 'Invalid email or password' }, 401);
   }
 
-  const isValid = await
+  const isValid = await verifyPassword(password, user.password_hash, user.password_salt);
+  if (!isValid) {
+    return c.json({ error: 'Invalid email or password' }, 401);
+  }
+
+  const token = await signJwt({ sub: user.id, email: user.email, name: user.name, role: user.role }, c.env.JWT_SECRET);
+  await recordAudit(c.env.DB, { userId: user.id, action: 'login', entity: 'user', entityId: user.id });
+
+  return c.json({
+    token,
+    user: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+    },
+  });
+});
+
+auth.get('/me', requireAuth(), async (c) => {
+  const userId = c.get('userId') as string;
+  const user = await c.env.DB.prepare('SELECT id, email, name, role FROM users WHERE id = ?').bind(userId).first<Omit<UserRow, 'password_hash' | 'password_salt'>>();
+
+  if (!user) {
+    return c.json({ error: 'User not found' }, 404);
+  }
+
+  return c.json({ user });
+});
+
+export default auth;
