@@ -41,7 +41,7 @@ auth.post('/signup', async (c) => {
     .run();
 
   const token = await signJwt({ sub: userId, email, name, role }, c.env.JWT_SECRET);
-  await recordAudit(c.env.DB, userId, { userId, action: 'user_created_self_signup', entity: 'user', entityId: userId });
+  await recordAudit(c.env.DB, { userId, action: 'user_created_self_signup', entity: 'user', entityId: userId });
 
   return c.json({ token, user: { id: userId, email, name, role } }, 201);
 });
@@ -66,7 +66,7 @@ auth.post('/login', async (c) => {
   }
 
   const token = await signJwt({ sub: user.id, email: user.email, name: user.name, role: user.role }, c.env.JWT_SECRET);
-  await recordAudit(c.env.DB, user.id, { userId: user.id, action: 'login', entity: 'user', entityId: user.id });
+  await recordAudit(c.env.DB, { userId: user.id, action: 'login', entity: 'user', entityId: user.id });
 
   return c.json({
     token,
