@@ -1,10 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
 
 export function Login() {
   const navigate = useNavigate();
-  const { login } = useAuth();
   const [email, setEmail] = useState('admin@example.org');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -16,7 +14,20 @@ export function Login() {
     setLoading(true);
 
     try {
-      await login(email, password);
+      const response = await fetch('https://survey-platform-api.nazeersoft.workers.dev/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Login failed');
+      }
+
+      const data = await response.json();
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
       navigate('/dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
@@ -27,7 +38,6 @@ export function Login() {
 
   return (
     <div className="min-h-screen flex bg-white">
-      {/* Left side - Brand showcase */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-900 text-white p-12 flex-col justify-between">
         <div>
           <div className="text-4xl font-black tracking-tight mb-2">Survey</div>
@@ -43,8 +53,8 @@ export function Login() {
                   <span className="text-sm font-bold text-blue-900">✓</span>
                 </div>
                 <div>
-                  <div className="font-semibold">Enterprise-Grade Security</div>
-                  <div className="text-sm text-blue-100">PBKDF2-SHA256 hashing, JWT tokens, role-based access</div>
+                  <div className="font-semibold">Enterprise Security</div>
+                  <div className="text-sm text-blue-100">PBKDF2-SHA256 hashing, JWT tokens</div>
                 </div>
               </div>
               
@@ -54,7 +64,7 @@ export function Login() {
                 </div>
                 <div>
                   <div className="font-semibold">Public Survey Collection</div>
-                  <div className="text-sm text-blue-100">No login required for respondents, real-time tracking</div>
+                  <div className="text-sm text-blue-100">No login required, real-time tracking</div>
                 </div>
               </div>
               
@@ -64,7 +74,7 @@ export function Login() {
                 </div>
                 <div>
                   <div className="font-semibold">Real-Time Analytics</div>
-                  <div className="text-sm text-blue-100">Live response tracking, district-wise distribution, scheme uptake</div>
+                  <div className="text-sm text-blue-100">Live response tracking, district distribution</div>
                 </div>
               </div>
               
@@ -74,7 +84,7 @@ export function Login() {
                 </div>
                 <div>
                   <div className="font-semibold">Global Infrastructure</div>
-                  <div className="text-sm text-blue-100">Cloudflare's 200+ edge locations, 99.9% uptime SLA</div>
+                  <div className="text-sm text-blue-100">Cloudflare 200+ edge locations, 99.9% uptime</div>
                 </div>
               </div>
             </div>
@@ -86,7 +96,6 @@ export function Login() {
         </div>
       </div>
 
-      {/* Right side - Login form */}
       <div className="w-full lg:w-1/2 flex flex-col justify-center px-6 sm:px-12 lg:px-16">
         <div className="w-full max-w-md mx-auto">
           <div className="mb-8">
@@ -95,7 +104,6 @@ export function Login() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Email field */}
             <div>
               <label htmlFor="email" className="block text-sm font-semibold text-gray-900 mb-2">
                 Email address
@@ -111,7 +119,6 @@ export function Login() {
               />
             </div>
 
-            {/* Password field */}
             <div>
               <label htmlFor="password" className="block text-sm font-semibold text-gray-900 mb-2">
                 Password
@@ -127,7 +134,6 @@ export function Login() {
               />
             </div>
 
-            {/* Error message */}
             {error && (
               <div className="p-3 rounded-lg bg-red-50 border border-red-200 flex items-start gap-3">
                 <span className="text-red-600 font-bold text-lg flex-shrink-0">!</span>
@@ -135,7 +141,6 @@ export function Login() {
               </div>
             )}
 
-            {/* Sign in button */}
             <button
               type="submit"
               disabled={loading}
@@ -152,17 +157,15 @@ export function Login() {
             </button>
           </form>
 
-          {/* Divider */}
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-gray-300"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">New to Survey Platform?</span>
+              <span className="px-2 bg-white text-gray-500">New user?</span>
             </div>
           </div>
 
-          {/* Sign up link */}
           <Link
             to="/signup"
             className="block w-full py-3 px-4 text-center rounded-lg font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-all"
@@ -170,15 +173,10 @@ export function Login() {
             Create account
           </Link>
 
-          {/* Demo credentials */}
           <div className="mt-8 p-4 rounded-lg bg-gray-50 border border-gray-200">
             <p className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-2">Demo credentials</p>
-            <p className="text-sm text-gray-700">
-              <span className="font-mono">admin@example.org</span>
-            </p>
-            <p className="text-sm text-gray-700">
-              <span className="font-mono">ChangeMe123!</span>
-            </p>
+            <p className="text-sm text-gray-700 font-mono">admin@example.org</p>
+            <p className="text-sm text-gray-700 font-mono">ChangeMe123!</p>
           </div>
         </div>
       </div>
